@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hidden API Explorer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="eyebrow">AUTHORIZED LOCAL DEMO</p>
+        <h1>Hidden API Attack-Surface Explorer</h1>
+        <p class="subtitle">Routes become evidence when identity, policy, and behavior meet.</p>
+      </div>
+      <label class="file-button">
+        Load report
+        <input id="report-file" type="file" accept="application/json,.json" />
+      </label>
+    </header>
+
+    <main>
+      <section class="summary" aria-label="Scan summary">
+        <div><span id="endpoint-count">—</span><small>endpoints</small></div>
+        <div><span id="hidden-count">—</span><small>undocumented</small></div>
+        <div><span id="tested-count">—</span><small>tested</small></div>
+        <div class="danger"><span id="finding-count">—</span><small>findings</small></div>
+      </section>
+
+      <section class="workspace">
+        <div class="graph-card">
+          <div class="legend">
+            <span><i class="role"></i>Role</span>
+            <span><i class="permission"></i>Permission</span>
+            <span><i class="endpoint"></i>Endpoint</span>
+            <span><i class="object"></i>Object</span>
+            <span><i class="finding"></i>Policy failure</span>
+          </div>
+          <div id="empty-state">
+            Run the explorer, then load <code>artifacts/demo-report.json</code>.
+          </div>
+          <svg id="graph" role="img" aria-label="Endpoint authorization graph"></svg>
+        </div>
+
+        <aside id="detail-panel">
+          <p class="eyebrow">SELECT AN ENDPOINT</p>
+          <h2>Response comparison</h2>
+          <p>Choose an endpoint node to inspect discovery sources, expected policy, and each identity's observed response.</p>
+        </aside>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
+

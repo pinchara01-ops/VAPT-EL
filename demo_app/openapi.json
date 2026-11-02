@@ -1,0 +1,26 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Ordinary Account Portal API",
+    "version": "1.0.0"
+  },
+  "servers": [{"url": "http://127.0.0.1:8001"}],
+  "paths": {
+    "/api/catalog": {
+      "get": {"operationId": "getCatalog", "responses": {"200": {"description": "Catalog"}}}
+    },
+    "/api/me": {
+      "get": {"operationId": "getCurrentUser", "responses": {"200": {"description": "Profile"}}}
+    },
+    "/api/users/{id}": {
+      "get": {
+        "operationId": "getUser",
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {"200": {"description": "User"}, "403": {"description": "Forbidden"}}
+      }
+    }
+  }
+}
+

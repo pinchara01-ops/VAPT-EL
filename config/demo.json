@@ -1,0 +1,66 @@
+{
+  "identities": [
+    {"name": "anonymous", "role": "anonymous", "headers": {}},
+    {
+      "name": "alice",
+      "role": "member",
+      "headers": {"Authorization": "Bearer alice-token"}
+    },
+    {
+      "name": "bob",
+      "role": "member",
+      "headers": {"Authorization": "Bearer bob-token"}
+    },
+    {
+      "name": "administrator",
+      "role": "admin",
+      "headers": {"Authorization": "Bearer admin-token"}
+    }
+  ],
+  "policies": [
+    {
+      "method": "GET",
+      "path": "/api/catalog",
+      "request_path": "/api/catalog",
+      "object": "catalog",
+      "permission": "read:public",
+      "allowed_identities": ["anonymous", "alice", "bob", "administrator"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/me",
+      "request_path": "/api/me",
+      "object": "profile",
+      "permission": "read:own",
+      "allowed_identities": ["alice", "bob", "administrator"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/{id}",
+      "request_path": "/api/users/2",
+      "object": "user:2",
+      "permission": "read:own-or-admin",
+      "allowed_identities": ["bob", "administrator"],
+      "owasp": "API1:2023 Broken Object Level Authorization"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit",
+      "request_path": "/api/admin/audit",
+      "object": "audit-log",
+      "permission": "read:admin",
+      "allowed_identities": ["administrator"],
+      "owasp": "API5:2023 Broken Function Level Authorization"
+    },
+    {
+      "method": "GET",
+      "path": "/api/debug/config",
+      "request_path": "/api/debug/config",
+      "object": "runtime-config",
+      "permission": "read:admin",
+      "allowed_identities": ["administrator"],
+      "owasp": "API9:2023 Improper Inventory Management"
+    }
+  ]
+}
+
