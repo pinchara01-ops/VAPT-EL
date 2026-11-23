@@ -21,7 +21,7 @@ those routes and verifies three intentional access-control failures:
 
 ## Quick start
 
-Requires Python 3.11+ and no third-party packages.
+Requires Python 3.11+ and project dependencies (`python -m pip install -e .`).
 
 Terminal 1:
 
@@ -42,6 +42,15 @@ python -m explorer.cli `
 
 python -m http.server 8000
 ```
+
+`--spec` accepts OpenAPI JSON or YAML. Traffic inputs are optional and repeatable:
+`--har` reads HAR 1.2 logs, while `--zap` reads JSON messages exports such as the
+response from ZAP's `core/view/messages` API. Traffic imports add method/path
+endpoints and parameter **names** (not values) to the inventory; only endpoints
+with a matching configured policy are replayed.
+
+For example, append `--har path/to/capture.har` and/or
+`--zap path/to/zap-messages.json` to the explorer command to include traffic.
 
 Open <http://127.0.0.1:8000/web/> and select an endpoint node. The right panel
 shows the expected policy and each identity's observed response.
@@ -66,8 +75,9 @@ artifacts/      generated evidence (ignored except for the directory marker)
 
 ## Scope
 
-This first milestone supports a supplied OpenAPI 3 JSON document, JavaScript
-route extraction, deterministic GET replay, explicit expected policy, JSON
-response normalization, credential redaction, and JSON evidence. It does not
-claim complete endpoint discovery or automatic authorization understanding.
-
+The MVP supports OpenAPI 3 JSON/YAML, AST-backed JavaScript route extraction,
+HAR and ZAP JSON traffic ingestion, deterministic GET replay, explicit expected
+policy, JSON response normalization, credential redaction, and JSON evidence.
+JavaScript extraction resolves string literals, static concatenation, templates,
+and simple variables in call arguments; it does not claim complete endpoint
+discovery or automatic authorization understanding.

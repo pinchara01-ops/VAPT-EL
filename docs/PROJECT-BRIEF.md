@@ -62,7 +62,7 @@ identity, plus a reproducible finding.
 ## Non-goals
 
 - Internet-wide or arbitrary-target scanning.
-- Claiming that regex extraction finds every JavaScript route.
+- Claiming static AST extraction finds every JavaScript route.
 - Automatically inferring a correct business authorization policy.
 - Destructive fuzzing, brute force, exploitation, or production testing.
 - Replacing expert validation of a finding.
@@ -77,8 +77,8 @@ identity, plus a reproducible finding.
 
 ### Yellow flags
 
-- Minified JavaScript and dynamically assembled URLs will require an AST-based
-  extractor after the MVP.
+- Minified JavaScript and dynamically assembled URLs may still evade static
+  AST-backed extraction.
 - Mature vulnerable applications such as crAPI are realistic but too heavy for
   the first classroom demo; the bundled deterministic lab is intentionally small.
 
@@ -87,4 +87,3 @@ identity, plus a reproducible finding.
 - OWASP Web Security Testing Guide, API reconnaissance
 - OWASP API Security Top 10 (2023)
 - OWASP ZAP access-control testing documentation
-

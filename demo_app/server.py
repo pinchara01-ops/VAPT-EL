@@ -4,7 +4,7 @@ import json
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 
 ROOT = Path(__file__).parent
@@ -14,6 +14,13 @@ USERS = {
     99: {"id": 99, "name": "Ada Admin", "email": "admin@example.test", "role": "admin"},
 }
 TOKENS = {"alice-token": 1, "bob-token": 2, "admin-token": 99}
+
+# Simple in-memory item store (reset each run)
+_ITEMS: dict[int, dict] = {
+    1: {"id": 1, "name": "Starter plan", "active": True},
+    2: {"id": 2, "name": "Pro plan", "active": True},
+}
+_NEXT_ITEM_ID = 3
 
 
 class DemoHandler(BaseHTTPRequestHandler):
@@ -45,7 +52,41 @@ class DemoHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def do_GET(self) -> None:  # noqa: N802 - stdlib handler API
+    def _read_body(self) -> bytes:
+        length = int(self.headers.get("Content-Length", 0))
+        return self.rfile.read(length) if length > 0 else b""
+
+    def _parse_body(self) -> dict:
+        raw = self._read_body()
+        ct = self.headers.get("Content-Type", "")
+        if not raw:
+            return {}
+        if "json" in ct:
+            try:
+                return json.loads(raw.decode("utf-8", errors="replace"))
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return {}
+        if "form" in ct or "urlencoded" in ct:
+            parsed = parse_qs(raw.decode("utf-8", errors="replace"))
+            return {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
+        return {}
+
+    def _require_admin(self) -> dict | None:
+        """Return the identity if admin, else send 403 and return None."""
+        identity = self._identity()
+        if not identity:
+            self._json(HTTPStatus.UNAUTHORIZED, {"error": "authentication required"})
+            return None
+        if identity.get("role") != "admin":
+            self._json(HTTPStatus.FORBIDDEN, {"error": "admin role required"})
+            return None
+        return identity
+
+    # ------------------------------------------------------------------
+    # GET
+    # ------------------------------------------------------------------
+
+    def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
 
         if path == "/":
@@ -89,7 +130,7 @@ class DemoHandler(BaseHTTPRequestHandler):
             if not user:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "user not found"})
                 return
-            # Intentional BOLA: membership is checked, ownership is not.
+            # Intentional BOLA: membership checked, ownership is not.
             self._json(HTTPStatus.OK, user)
             return
 
@@ -112,6 +153,129 @@ class DemoHandler(BaseHTTPRequestHandler):
             )
             return
 
+        # Mutation endpoints – GET list/item
+        if path == "/api/items":
+            if not identity:
+                self._json(HTTPStatus.UNAUTHORIZED, {"error": "authentication required"})
+                return
+            self._json(HTTPStatus.OK, {"items": list(_ITEMS.values())})
+            return
+
+        if path.startswith("/api/items/"):
+            if not identity:
+                self._json(HTTPStatus.UNAUTHORIZED, {"error": "authentication required"})
+                return
+            try:
+                item_id = int(path.rsplit("/", 1)[1])
+            except ValueError:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": "invalid item id"})
+                return
+            item = _ITEMS.get(item_id)
+            if not item:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "item not found"})
+                return
+            self._json(HTTPStatus.OK, item)
+            return
+
+        self._json(HTTPStatus.NOT_FOUND, {"error": "route not found"})
+
+    # ------------------------------------------------------------------
+    # POST — Create
+    # ------------------------------------------------------------------
+
+    def do_POST(self) -> None:  # noqa: N802
+        path = urlparse(self.path).path
+        if path == "/api/items":
+            identity = self._identity()
+            if not identity:
+                self._json(HTTPStatus.UNAUTHORIZED, {"error": "authentication required"})
+                return
+            # Intentional BFLA: any authenticated user can create items; only admins should.
+            global _NEXT_ITEM_ID
+            data = self._parse_body()
+            new_item = {
+                "id": _NEXT_ITEM_ID,
+                "name": data.get("name", "unnamed"),
+                "active": bool(data.get("active", True)),
+                "created_by": identity["id"],
+            }
+            _ITEMS[_NEXT_ITEM_ID] = new_item
+            _NEXT_ITEM_ID += 1
+            self._json(HTTPStatus.CREATED, new_item)
+            return
+        self._json(HTTPStatus.NOT_FOUND, {"error": "route not found"})
+
+    # ------------------------------------------------------------------
+    # PUT — Full update
+    # ------------------------------------------------------------------
+
+    def do_PUT(self) -> None:  # noqa: N802
+        path = urlparse(self.path).path
+        if path.startswith("/api/items/"):
+            identity = self._require_admin()
+            if identity is None:
+                return
+            try:
+                item_id = int(path.rsplit("/", 1)[1])
+            except ValueError:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": "invalid item id"})
+                return
+            if item_id not in _ITEMS:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "item not found"})
+                return
+            data = self._parse_body()
+            _ITEMS[item_id] = {"id": item_id, **data}
+            self._json(HTTPStatus.OK, _ITEMS[item_id])
+            return
+        self._json(HTTPStatus.NOT_FOUND, {"error": "route not found"})
+
+    # ------------------------------------------------------------------
+    # PATCH — Partial update
+    # ------------------------------------------------------------------
+
+    def do_PATCH(self) -> None:  # noqa: N802
+        path = urlparse(self.path).path
+        if path.startswith("/api/items/"):
+            # Intentional BOLA: any authenticated user can patch any item.
+            identity = self._identity()
+            if not identity:
+                self._json(HTTPStatus.UNAUTHORIZED, {"error": "authentication required"})
+                return
+            try:
+                item_id = int(path.rsplit("/", 1)[1])
+            except ValueError:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": "invalid item id"})
+                return
+            if item_id not in _ITEMS:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "item not found"})
+                return
+            data = self._parse_body()
+            _ITEMS[item_id].update(data)
+            self._json(HTTPStatus.OK, _ITEMS[item_id])
+            return
+        self._json(HTTPStatus.NOT_FOUND, {"error": "route not found"})
+
+    # ------------------------------------------------------------------
+    # DELETE
+    # ------------------------------------------------------------------
+
+    def do_DELETE(self) -> None:  # noqa: N802
+        path = urlparse(self.path).path
+        if path.startswith("/api/items/"):
+            identity = self._require_admin()
+            if identity is None:
+                return
+            try:
+                item_id = int(path.rsplit("/", 1)[1])
+            except ValueError:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": "invalid item id"})
+                return
+            if item_id not in _ITEMS:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "item not found"})
+                return
+            deleted = _ITEMS.pop(item_id)
+            self._json(HTTPStatus.OK, {"deleted": deleted})
+            return
         self._json(HTTPStatus.NOT_FOUND, {"error": "route not found"})
 
 
@@ -133,4 +297,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

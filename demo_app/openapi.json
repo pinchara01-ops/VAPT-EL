@@ -20,7 +20,104 @@
         ],
         "responses": {"200": {"description": "User"}, "403": {"description": "Forbidden"}}
       }
+    },
+    "/api/items": {
+      "get": {
+        "operationId": "listItems",
+        "responses": {"200": {"description": "Item list"}, "401": {"description": "Unauthorized"}}
+      },
+      "post": {
+        "operationId": "createItem",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "active": {"type": "boolean"}
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Item created"},
+          "401": {"description": "Unauthorized"},
+          "403": {"description": "Forbidden"}
+        }
+      }
+    },
+    "/api/items/{id}": {
+      "get": {
+        "operationId": "getItem",
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {"200": {"description": "Item"}, "404": {"description": "Not found"}}
+      },
+      "put": {
+        "operationId": "replaceItem",
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "active": {"type": "boolean"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Item replaced"},
+          "403": {"description": "Forbidden"},
+          "404": {"description": "Not found"}
+        }
+      },
+      "patch": {
+        "operationId": "patchItem",
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "active": {"type": "boolean"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Item patched"},
+          "401": {"description": "Unauthorized"},
+          "404": {"description": "Not found"}
+        }
+      },
+      "delete": {
+        "operationId": "deleteItem",
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {"description": "Item deleted"},
+          "403": {"description": "Forbidden"},
+          "404": {"description": "Not found"}
+        }
+      }
     }
   }
 }
-

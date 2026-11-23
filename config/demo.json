@@ -60,7 +60,48 @@
       "permission": "read:admin",
       "allowed_identities": ["administrator"],
       "owasp": "API9:2023 Improper Inventory Management"
+    },
+    {
+      "method": "POST",
+      "path": "/api/items",
+      "request_path": "/api/items",
+      "object": "item",
+      "permission": "write:admin",
+      "allowed_identities": ["administrator"],
+      "payload": {"name": "test-item", "active": true},
+      "payload_content_type": "application/json",
+      "owasp": "API5:2023 Broken Function Level Authorization"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/items/{id}",
+      "request_path": "/api/items/1",
+      "object": "item:1",
+      "permission": "write:admin",
+      "allowed_identities": ["administrator"],
+      "payload": {"name": "updated-item", "active": false},
+      "payload_content_type": "application/json",
+      "owasp": "API1:2023 Broken Object Level Authorization"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/items/{id}",
+      "request_path": "/api/items/1",
+      "object": "item:1",
+      "permission": "write:own-or-admin",
+      "allowed_identities": ["alice", "bob", "administrator"],
+      "payload": {"active": false},
+      "payload_content_type": "application/json",
+      "owasp": "API1:2023 Broken Object Level Authorization"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/items/{id}",
+      "request_path": "/api/items/2",
+      "object": "item:2",
+      "permission": "delete:admin",
+      "allowed_identities": ["administrator"],
+      "owasp": "API5:2023 Broken Function Level Authorization"
     }
   ]
 }
-

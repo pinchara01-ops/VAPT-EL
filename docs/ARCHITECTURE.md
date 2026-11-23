@@ -37,10 +37,12 @@ and remediation. No authorization header or token enters the report.
 
 ## Next milestones
 
-1. Parse OpenAPI YAML and request examples.
-2. Replace regex-only JavaScript discovery with a parser-backed extractor.
-3. Import HAR files and ZAP histories.
-4. Add safe state setup for owned resources and mutation verification.
-5. Export Markdown, HTML, and SARIF reports.
-6. Evaluate against VAmPI, then crAPI, with measured precision and recall.
+1. Add OpenAPI request-example extraction.
+2. Add safe state setup for owned resources and mutation verification.
+3. Export Markdown, HTML, and SARIF reports.
+4. Evaluate against VAmPI, then crAPI, with measured precision and recall.
 
+OpenAPI YAML and HAR/ZAP JSON messages imports are implemented for endpoint
+inventory. Traffic imports retain parameter names but not captured values.
+JavaScript endpoint discovery uses Esprima's AST to resolve route literals,
+concatenation, templates, and simple variables in call arguments.
